@@ -1,26 +1,48 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
+import React, { useEffect, useState } from 'react';
+import styles from './App.module.css';
+import { IMessage } from './models/message';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+  const [hubConnection, setHubConnection] = useState<HubConnection | null>(null);
+
+
+  useEffect(() => {
+    const newHubConnection = new HubConnectionBuilder()
+      .withUrl('https://localhost:5001/chat')
+      .withAutomaticReconnect()
+      .build();
+
+    setHubConnection(newHubConnection);
+  }, []);
+
+  useEffect(() => {
+    if (hubConnection) {
+      hubConnection.start()
+        .then(result => {
+          hubConnection.on('ReceiveConnected', (userId: string) => {
+            console.log('you are connected to the hub as ' + userId);
+          })
+
+          hubConnection.on('ReceiveMessage', (message: IMessage) => {
+            console.log('message received: ' + message.content);
+          })
+
+        })
+        .catch(error => {
+          console.log('hub connection error: ' + error);
+        })
+
+    }
+  }, [hubConnection]);
+
+
+
+return (
+  <div className={styles.app}>
+
+  </div>
+);
 }
 
 export default App;
